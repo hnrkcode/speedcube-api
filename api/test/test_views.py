@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
+from django.core.exceptions import ObjectDoesNotExist
+
 
 def get_token(username):
     """Return access token"""
@@ -121,6 +123,51 @@ class TestChangePasswordView(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
+class TestDeleteUserView(APITestCase):
+    def setUp(self):
+        UserModel.objects.create_user(username="TestUser", password="TestPassword")
+
+    def test_missing_password_attribute(self):
+        username = "TestUser"
+        url = reverse("delete")
+        data = {}
+        self.client.credentials(HTTP_AUTHORIZATION=get_token(username))
+        response = self.client.post(url, data, format="json")
+        expected_response = {"success": False, "message": "Missing attribute."}
+
+        self.assertDictEqual(response.data, expected_response)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_wrong_password(self):
+        username = "TestUser"
+        url = reverse("delete")
+        data = {"password": ""}
+        self.client.credentials(HTTP_AUTHORIZATION=get_token(username))
+        response = self.client.post(url, data, format="json")
+        expected_response = {"success": False, "message": "Wrong password."}
+
+        self.assertDictEqual(response.data, expected_response)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_delete_user(self):
+        username = "TestUser"
+        url = reverse("delete")
+        data = {"password": "TestPassword"}
+        self.client.credentials(HTTP_AUTHORIZATION=get_token(username))
+        response = self.client.post(url, data, format="json")
+        expected_response = {
+            "success": True,
+            "message": "Account successfully deleted.",
+        }
+
+        self.assertDictEqual(response.data, expected_response)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Test if the user really is deleted.
+        with self.assertRaises(ObjectDoesNotExist):
+            UserModel.objects.get(username=username)
+
+
 class TestRegisterView(APITestCase):
     @classmethod
     def setUpTestData(cls):
@@ -223,3 +270,19 @@ class TestRegisterView(APITestCase):
             delete_response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED
         )
         self.assertEqual(head_response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class TestCheckView(APITestCase):
+    pass
+
+
+class TestUserView(APITestCase):
+    pass
+
+
+class TestProfileView(APITestCase):
+    pass
+
+
+class TestStatisticView(APITestCase):
+    pass

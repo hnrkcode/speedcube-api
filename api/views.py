@@ -55,12 +55,12 @@ class DeleteUserView(APIView):
         try:
             username = self.request.user.username
             password = request.data["password"]
-        except KeyError as e:
-            return Response({"success": False, "message": e})
+        except KeyError:
+            return Response({"success": False, "message": "Missing attribute."})
 
         user = authenticate(username=username, password=password)
 
-        if user is not None:
+        if user:
             # Delete user from database.
             models.UserModel.objects.get(id=self.request.user.id).delete()
 
