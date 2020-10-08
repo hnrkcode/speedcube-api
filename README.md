@@ -17,7 +17,7 @@ sudo apt update && sudo apt install postgresql postgresql-contrib libpq-dev pyth
 Install dependencies with [Pipenv](https://github.com/pypa/pipenv) from the `Pipfile`:
 
 ```bash
-pipenv install
+pipenv install --dev
 ```
 When the dependencies are installed you only need to activate the environment:
 
@@ -42,4 +42,11 @@ Run all unit tests:
 
 ```bash
 python manage.py test
+```
+
+Test coverage:
+
+```bash
+coverage run --source="." manage.py test api
+coverage report
 ```

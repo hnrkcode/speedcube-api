@@ -15,6 +15,7 @@ django-environ = "*"
 
 [dev-packages]
 psycopg2-binary = "*"
+coverage = "*"
 
 [requires]
 python_version = "3.8"
