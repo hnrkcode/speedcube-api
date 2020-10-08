@@ -64,86 +64,120 @@ class TestCheckUsernameModel(TestCase):
 
 
 class TestUserModel(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        UserModel.objects.create(
-            username="test",
-            email="test@test.com",
-            password="test",
-            first_name="Aaaa",
-            last_name="Bbbb",
+    def setUp(self):
+        user = UserModel.objects.create_user(
+            username="TestUsername", password="TestPassword"
         )
+        user.first_name = "First"
+        user.last_name = "Last"
+        user.save()
 
-    def test_full_name(self):
+    def test_object_name(self):
+        """Test __str__ method"""
+
+        user = UserModel.objects.get(username="TestUsername")
+        received = str(user)
+        expected = "TestUsername"
+
+        self.assertEqual(received, expected)
+
+    def test_get_full_name(self):
         """Test if full name is first and last name"""
-        user = UserModel.objects.get(id=1)
-        self.assertEqual(user.full_name(), f"{user.first_name} {user.last_name}")
+
+        user = UserModel.objects.get(username="TestUsername")
+        received = user.get_full_name()
+        expected = "First Last"
+
+        self.assertEqual(received, expected)
 
 
 class TestTimeModel(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        UserModel.objects.create(
-            username="test", email="test@test.com", password="test"
+    def setUp(self):
+        user = UserModel.objects.create_user(
+            username="TestUsername", password="TestPassword"
         )
-        TimeModel.objects.create(
-            user=UserModel.objects.get(id=1),
+        user.save()
+        time = TimeModel.objects.create(
+            user=UserModel.objects.get(username="TestUsername"),
             time=1234,
             dnf=False,
             penalty=False,
             comment="Some comment",
         )
+        time.save()
 
     def test_object_name(self):
-        time = TimeModel.objects.get(id=1)
-        self.assertEquals(str(time), str(time.time))
+        time = TimeModel.objects.get(time=1234)
+        received = str(time)
+        expected = str(time.time)
+
+        self.assertEquals(received, expected)
 
     def test_user_label(self):
-        time = TimeModel.objects.get(id=1)
-        field_label = time._meta.get_field("user").verbose_name
-        self.assertEquals(field_label, "user")
+        time = TimeModel.objects.get(time=1234)
+        field_label = time._meta.get_field("user")
+        received = field_label.verbose_name
+        expected = "user"
+
+        self.assertEquals(received, expected)
 
     def test_time_label(self):
-        time = TimeModel.objects.get(id=1)
-        field_label = time._meta.get_field("time").verbose_name
-        self.assertEquals(field_label, "time")
+        time = TimeModel.objects.get(time=1234)
+        field_label = time._meta.get_field("time")
+        received = field_label.verbose_name
+        expected = "time"
+
+        self.assertEquals(received, expected)
 
     def test_dnf_label(self):
-        time = TimeModel.objects.get(id=1)
-        field_label = time._meta.get_field("dnf").verbose_name
-        self.assertEquals(field_label, "dnf")
+        time = TimeModel.objects.get(time=1234)
+        field_label = time._meta.get_field("dnf")
+        received = field_label.verbose_name
+        expected = "dnf"
+
+        self.assertEquals(received, expected)
 
     def test_penalty_label(self):
-        time = TimeModel.objects.get(id=1)
-        field_label = time._meta.get_field("penalty").verbose_name
-        self.assertEquals(field_label, "penalty")
+        time = TimeModel.objects.get(time=1234)
+        field_label = time._meta.get_field("penalty")
+        received = field_label.verbose_name
+        expected = "penalty"
+
+        self.assertEquals(received, expected)
 
     def test_comment_label(self):
-        time = TimeModel.objects.get(id=1)
-        field_label = time._meta.get_field("comment").verbose_name
-        self.assertEquals(field_label, "comment")
+        time = TimeModel.objects.get(time=1234)
+        field_label = time._meta.get_field("comment")
+        received = field_label.verbose_name
+        expected = "comment"
+
+        self.assertEquals(received, expected)
 
     def test_created_label(self):
-        time = TimeModel.objects.get(id=1)
-        field_label = time._meta.get_field("created").verbose_name
-        self.assertEquals(field_label, "created")
+        time = TimeModel.objects.get(time=1234)
+        field_label = time._meta.get_field("created")
+        received = field_label.verbose_name
+        expected = "created"
+
+        self.assertEquals(received, expected)
 
     def test_comment_default_argments(self):
-        time = TimeModel.objects.get(id=1)
+        time = TimeModel.objects.get(time=1234)
         is_null = time._meta.get_field("comment").null
         is_blank = time._meta.get_field("comment").blank
+
         self.assertTrue(is_null)
         self.assertTrue(is_blank)
 
     def test_created_default_arguments(self):
-        time = TimeModel.objects.get(id=1)
+        time = TimeModel.objects.get(time=1234)
         is_auto_now_add = time._meta.get_field("created").auto_now_add
         self.assertTrue(is_auto_now_add)
 
     def test_default_dnf_value(self):
-        time = TimeModel.objects.get(id=1)
-        self.assertEquals(time.dnf, False)
+        time = TimeModel.objects.get(time=1234)
+        self.assertFalse(time.dnf)
 
     def test_default_penalty_value(self):
-        time = TimeModel.objects.get(id=1)
-        self.assertEquals(time.penalty, False)
+        time = TimeModel.objects.get(time=1234)
+        self.assertFalse(time.penalty)
