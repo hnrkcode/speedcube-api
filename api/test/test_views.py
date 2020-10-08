@@ -1,8 +1,124 @@
+from api.models import UserModel
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import AccessToken
 
-from api.models import UserModel
+
+def get_token(username):
+    """Return access token"""
+
+    user = UserModel.objects.get(username=username)
+    token = AccessToken.for_user(user)
+
+    return f"Bearer {str(token)}"
+
+
+class TestChangePasswordView(APITestCase):
+    def setUp(self):
+        UserModel.objects.create_user(username="TestUser", password="TestPassword")
+
+    def test_missing_attributes(self):
+        username = "TestUser"
+        url = reverse("change-password")
+        # Missing 'currentPassword' attribute.
+        data = {
+            "newPassword": "newPassword123",
+            "confirmation": "newPassword123",
+        }
+        self.client.credentials(HTTP_AUTHORIZATION=get_token(username))
+        response = self.client.post(url, data, format="json")
+        expected_response = {"success": False, "message": "Missing attribute."}
+
+        self.assertDictEqual(response.data, expected_response)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_wrong_password(self):
+        username = "TestUser"
+        url = reverse("change-password")
+        data = {
+            "currentPassword": "wrong_current_password",
+            "newPassword": "newPassword123",
+            "confirmation": "newPassword123",
+        }
+        self.client.credentials(HTTP_AUTHORIZATION=get_token(username))
+        response = self.client.post(url, data, format="json")
+        expected_response = {"success": False, "message": "Wrong password."}
+
+        self.assertDictEqual(response.data, expected_response)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_too_short_password(self):
+        username = "TestUser"
+        url = reverse("change-password")
+        data = {
+            "currentPassword": "TestPassword",
+            "newPassword": "short",
+            "confirmation": "short",
+        }
+        self.client.credentials(HTTP_AUTHORIZATION=get_token(username))
+        response = self.client.post(url, data, format="json")
+        expected_response = {"success": False, "message": "Too short password."}
+
+        self.assertDictEqual(response.data, expected_response)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_confirmation_dont_match(self):
+        username = "TestUser"
+        url = reverse("change-password")
+        data = {
+            "currentPassword": "TestPassword",
+            "newPassword": "password",
+            "confirmation": "pass",
+        }
+        self.client.credentials(HTTP_AUTHORIZATION=get_token(username))
+        response = self.client.post(url, data, format="json")
+        expected_response = {"success": False, "message": "Confirmation doesn't match."}
+
+        self.assertDictEqual(response.data, expected_response)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_password_changed_successfully(self):
+        username = "TestUser"
+        url = reverse("change-password")
+        data = {
+            "currentPassword": "TestPassword",
+            "newPassword": "new_password",
+            "confirmation": "new_password",
+        }
+        self.client.credentials(HTTP_AUTHORIZATION=get_token(username))
+        response = self.client.post(url, data, format="json")
+        expected_response = {"success": True, "message": "Password is now changed."}
+
+        self.assertDictEqual(response.data, expected_response)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_password_length(self):
+        """Ensure that the shortest allowed password is atleast 8 characters long."""
+        minimum_length = 8
+        username = "TestUser"
+        url = reverse("change-password")
+        data = {"currentPassword": "TestPassword"}
+        self.client.credentials(HTTP_AUTHORIZATION=get_token(username))
+
+        for password_length in range(7, 10):
+            data["newPassword"] = "a" * password_length
+            data["confirmation"] = "a" * password_length
+
+            response = self.client.post(url, data, format="json")
+
+            if password_length < minimum_length:
+                self.assertDictEqual(
+                    response.data, {"success": False, "message": "Too short password."}
+                )
+            else:
+                self.assertDictEqual(
+                    response.data,
+                    {"success": True, "message": "Password is now changed."},
+                )
+                data["currentPassword"] = data["newPassword"]
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class TestRegisterView(APITestCase):

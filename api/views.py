@@ -17,16 +17,15 @@ class ChangePassword(APIView):
     def post(self, request, **kwargs):
 
         try:
-            username = self.request.user.username
             current_password = request.data["currentPassword"]
             new_password = request.data["newPassword"]
             confirmation = request.data["confirmation"]
         except KeyError:
             return Response({"success": False, "message": "Missing attribute."})
 
-        user = authenticate(username=username, password=current_password)
+        correct_password = request.user.check_password(current_password)
 
-        if user is None:
+        if not correct_password:
             return Response({"success": False, "message": "Wrong password."})
 
         if len(new_password) < 8:
@@ -37,10 +36,9 @@ class ChangePassword(APIView):
                 {"success": False, "message": "Confirmation doesn't match."}
             )
 
-        if user is not None:
-            user = models.UserModel.objects.get(username=username)
-            user.set_password(new_password)
-            user.save()
+        if correct_password:
+            request.user.set_password(new_password)
+            request.user.save()
 
             return Response({"success": True, "message": "Password is now changed."})
 
