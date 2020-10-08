@@ -7,7 +7,7 @@ from api.models import TimeModel, UserModel
 class TestCalculations(TestCase):
     @classmethod
     def setUpTestData(cls):
-        UserModel.objects.create(
+        UserModel.objects.create_user(
             username="test", email="test@test.com", password="test"
         )
 

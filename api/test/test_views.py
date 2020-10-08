@@ -124,7 +124,7 @@ class TestChangePasswordView(APITestCase):
 class TestRegisterView(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        UserModel.objects.create(
+        UserModel.objects.create_user(
             username="user1", email="test@mail.com", password="testpassword"
         )
 
